@@ -1,0 +1,80 @@
+"""Hello there! Here is my second project on GitHub. 
+I made it for my working purposes. I would be grateful for your comments"""
+#commented lines aren't real comments. Just commented peaces of unneeded code 
+
+
+import pandas as pd
+from pandas import Series,DataFrame
+import numpy as np
+
+import hashlib
+
+import os
+import datetime
+
+def get_cur_date_time_yyyy_mm_dd__hh_mm_ss():
+    cur_time = datetime.datetime.now()
+    curtime_str = str(cur_time).split(" ")
+    curdate_yyyy_mm_dd_ready = curtime_str[0].split("-")[0] + "_" + curtime_str[0].split("-")[1] + "_" + curtime_str[0].split("-")[2]
+    curtime_hh_mm_ss = curtime_str[1].split(".")[0]
+    curtime_hh_mm_ss_ready = curtime_hh_mm_ss.split(":")[0] + "_" + curtime_hh_mm_ss.split(":")[1] + "_" + curtime_hh_mm_ss.split(":")[2]
+    cur_date_time = curdate_yyyy_mm_dd_ready + "__" + curtime_hh_mm_ss_ready
+    return cur_date_time
+
+phone_md5_lst = []
+email_md5_lst = []
+name_of_table_with_contacts = ''
+
+name_of_phone_column = ''
+name_of_email_column = ''
+#name_of_table_with_contacts = input('Впиши название файла, в котором лежат телефоны и e-mail без точки и разрешения в конце. Файл должен быть в формате .csv с разделителями - запятыми. Если не впишешь, то будет "тест_данные_для_look_alike_не_шифрованные(2)" ') or 'тест_данные_для_look_alike_не_шифрованные(2).csv'
+
+
+cur_dir = os.getcwd()
+list_of_files_in_current_directory = os.listdir()
+print(list_of_files_in_current_directory)
+print()
+print(name_of_table_with_contacts)
+
+
+while name_of_table_with_contacts not in list_of_files_in_current_directory:
+        name_of_table_with_contacts = input('Type name of file with phones and emails. File should have .csv entension separated by commas. If you leave this field empty, script will use name "md5_test_phone_email.csv" ') or 'md5_test_phone_email.csv'
+        if name_of_table_with_contacts[-4::] != '.csv':
+            name_of_table_with_contacts += '.csv'
+        #print(name_of_table_with_contacts)
+try:
+    tel_mail_dataframe = pd.read_csv(f'{name_of_table_with_contacts}')
+except:
+    print("Incorrect filename. Try again")
+    
+while name_of_phone_column not in tel_mail_dataframe.columns:
+    name_of_phone_column = input('Type name of column with phones. Fiels is case-sensitive. By default would be "phone" ') or 'phone'
+while name_of_email_column not in tel_mail_dataframe.columns:
+    name_of_email_column = input('Type name of column with e-mails. Fiels is case-sensitive. By default would be "email" ') or 'email'    
+    
+
+email_arr = tel_mail_dataframe[name_of_email_column].values
+phone_arr = tel_mail_dataframe[name_of_phone_column].values
+
+print(f"{len(phone_arr)} phones and {len(email_arr)} e-mails found") 
+
+for index in range(len(phone_arr)):
+    phone_hash_object = hashlib.md5(str(phone_arr[index]).encode())
+    phone_md5_lst.append(phone_hash_object.hexdigest())
+    
+    email_hash_object = hashlib.md5(str(email_arr[index]).encode())
+    email_md5_lst.append(email_hash_object.hexdigest())
+    
+phone_md5_series = Series(phone_md5_lst)
+email_md5_series = Series(phone_md5_lst)
+
+phone_email_md5_df = pd.DataFrame({'phone': phone_md5_series,
+                   'email': email_md5_series})
+
+cur_dir = os.getcwd()
+
+hashed_phone_email_md5_filename = f"phone_email_md5_{get_cur_date_time_yyyy_mm_dd__hh_mm_ss()}.csv"
+
+phone_email_md5_df.to_csv(f'{hashed_phone_email_md5_filename}', sep=',',encoding='utf-8', index=False)
+
+print(f'File with phones and email hashes created. It is called "{hashed_phone_email_md5_filename}"')
